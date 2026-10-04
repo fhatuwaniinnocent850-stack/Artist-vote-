@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ArtistVote — Public + Admin Prototype</title>
+<style>
+:root{--bg:#08090d;--surface:#12141b;--surface2:#191c25;--line:#2a2e39;--text:#fff;--muted:#9ca3b1;--pink:#ff3974;--green:#36d399}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,sans-serif}
+button,input{font:inherit}.wrap{max-width:900px;margin:auto;padding:0 16px 50px}
+header{position:sticky;top:0;z-index:5;background:rgba(8,9,13,.95);backdrop-filter:blur(12px);border-bottom:1px solid #171922}
+nav{height:68px;display:flex;align-items:center;justify-content:space-between}.logo{font-size:25px;font-weight:900}.logo span{color:var(--pink)}
+.navbtn{background:var(--surface2);border:1px solid var(--line);color:#fff;border-radius:10px;padding:9px 12px;font-weight:700}
+.hero{padding:32px 0 20px}.eyebrow{color:var(--pink);font-weight:900;font-size:12px;letter-spacing:1px}.hero h1{font-size:38px;line-height:1;margin:8px 0 12px}.hero p{color:var(--muted);font-size:17px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:20px;margin:14px 0}.topline{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.live{background:#33202a;color:#ff79a0;border:1px solid #633248;padding:6px 9px;border-radius:999px;font-size:11px;font-weight:900}
+.artist{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid #242832}.artist:last-child{border-bottom:0}.avatar{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;background:#20232c;font-weight:900}.info{flex:1}.name{font-weight:800}.small{font-size:12px;color:var(--muted);margin-top:4px}.bar{height:6px;background:#292d37;border-radius:10px;margin-top:8px;overflow:hidden}.fill{height:100%;background:var(--pink)}
+.vote{background:var(--pink);color:#fff;border:0;border-radius:11px;padding:10px 13px;font-weight:900}.vote:disabled{opacity:.55}
+.hidden{display:none}.adminTitle{font-size:30px;margin:20px 0 4px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.stat{background:var(--surface2);border:1px solid var(--line);border-radius:16px;padding:15px}.stat b{font-size:25px}.stat span{display:block;color:var(--muted);font-size:12px;margin-top:4px}.row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid #242832}.pill{font-size:11px;padding:5px 8px;border-radius:999px;background:#173328;color:#65e7b0}.notice{padding:12px;border:1px solid #343844;border-radius:12px;color:var(--muted);font-size:12px;margin-top:12px}.primary{background:var(--pink);border:0;color:#fff;border-radius:12px;padding:11px 14px;font-weight:900}.secondary{background:var(--surface2);border:1px solid var(--line);color:#fff;border-radius:12px;padding:11px 14px;font-weight:800}.login{max-width:420px;margin:55px auto}.login input{width:100%;padding:13px;background:var(--surface2);border:1px solid var(--line);color:#fff;border-radius:12px;margin:7px 0}.error{color:#ff718f;font-size:12px}.toast{position:fixed;right:16px;bottom:16px;background:#171a21;border:1px solid #343844;padding:14px 16px;border-radius:14px;box-shadow:0 15px 40px #0008;display:none}.bell{font-size:20px}
+@media(max-width:650px){.grid{grid-template-columns:1fr 1fr}.hero h1{font-size:32px}.topline{display:block}.live{display:inline-block;margin-top:10px}}
+</style>
+</head>
+<body>
+<header><div class="wrap"><nav><div class="logo">Artist<span>Vote</span></div><button class="navbtn" onclick="showAdmin()">🔐 Admin</button></nav></div></header>
+
+<main class="wrap">
+<section id="public">
+  <div class="hero"><div class="eyebrow">COMMUNITY MUSIC VOTING</div><h1>Let the people choose. 🔥</h1><p>Vote for your favourite artist. Results update live.</p></div>
+  <div class="card">
+    <div class="topline"><div><h2>WHO GOT THE BEST CATALOGUE? 🔥</h2><div class="small">Vote once from this device in this prototype.</div></div><span class="live">● LIVE</span></div>
+    <div id="artists"></div>
+    <div class="notice">Share this contest on Facebook, WhatsApp and TikTok. In the production version, votes will be stored on your central server.</div>
+  </div>
+</section>
+
+<section id="login" class="hidden">
+ <div class="card login"><div class="eyebrow">PRIVATE AREA</div><h2>Admin Login</h2><p class="small">Only the owner should have access.</p>
+ <input id="user" placeholder="Username" autocomplete="username"><input id="pass" type="password" placeholder="Password" autocomplete="current-password">
+ <button class="primary" onclick="login()">Sign in</button> <button class="secondary" onclick="showPublic()">Back</button>
+ <div id="loginError" class="error"></div>
+ </div>
+</section>
+
+<section id="admin" class="hidden">
+ <div class="adminTitle">Admin Dashboard <span class="bell">🔔</span></div><div class="small">Owner controls • People's Favourite Artist</div>
+ <div class="grid">
+  <div class="stat"><b id="totalVotes">0</b><span>Total votes</span></div>
+  <div class="stat"><b id="topArtist">—</b><span>Leading artist</span></div>
+  <div class="stat"><b id="lastVote">—</b><span>Latest vote</span></div>
+ </div>
+ <div class="card"><div class="topline"><h2>Live Results</h2><button class="secondary" onclick="resetDemo()">Reset demo</button></div><div id="adminResults"></div></div>
+ <div class="card"><h2>Recent vote notifications</h2><div id="notifications"></div></div>
+ <div class="notice">Production architecture: Public voting page → secure API → database → Admin Dashboard → push/email notification. The prototype simulates this locally; it does not yet provide real internet-wide voting.</div>
+ <button class="secondary" onclick="logout()">Log out</button>
+</section>
+</main>
+<div id="toast" class="toast"></div>
+<script>
+const base=[
+{name:"GUSBA BANANA",votes:0},
+{name:"JR PLAYER",votes:0},
+{name:"GIVEN DA CHIEF",votes:0},
+{name:"ASA TEE",votes:0},
+{name:"VP TALKING",votes:0},
+{name:"PRO HEED",votes:0}
+];
+let data=base.map(x=>({...x}));
+let notifications=JSON.parse(localStorage.getItem("av_notifications")||"[]");
+let voted=JSON.parse(localStorage.getItem("av_voted")||"[]");
+function save(){localStorage.setItem("av_data",JSON.stringify(data));localStorage.setItem("av_notifications",JSON.stringify(notifications));localStorage.setItem("av_voted",JSON.stringify(voted))}
+function renderPublic(){
+ const max=Math.max(...data.map(x=>x.votes));
+ document.getElementById("artists").innerHTML=data.map((a,i)=>`<div class="artist"><div class="avatar">${a.name[0]}</div><div class="info"><div class="name">${i+1}. ${a.name}</div><div class="small">${a.votes.toLocaleString()} votes</div><div class="bar"><div class="fill" style="width:${Math.round(a.votes/max*100)}%"></div></div></div><button class="vote" ${voted.includes(i)?"disabled":""} onclick="vote(${i})">${voted.includes(i)?"VOTED":"VOTE"}</button></div>`).join("");
+}
+function vote(i){
+ if(voted.includes(i))return;
+ data[i].votes++;voted.push(i);
+ const t=new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"});
+ notifications.unshift({artist:data[i].name,time:t});
+ notifications=notifications.slice(0,12);save();renderPublic();renderAdmin();
+ showToast("🔔 New vote: "+data[i].name);
+}
+function renderAdmin(){
+ const total=data.reduce((s,a)=>s+a.votes,0), lead=[...data].sort((a,b)=>b.votes-a.votes)[0];
+ document.getElementById("totalVotes").textContent=total.toLocaleString();
+ document.getElementById("topArtist").textContent=lead.name;
+ document.getElementById("lastVote").textContent=notifications[0]?.artist||"—";
+ const max=Math.max(...data.map(x=>x.votes));
+ document.getElementById("adminResults").innerHTML=data.map((a,i)=>`<div class="row"><div><b>${i+1}. ${a.name}</b><div class="bar"><div class="fill" style="width:${Math.round(a.votes/max*100)}%"></div></div></div><b>${a.votes}</b></div>`).join("");
+ document.getElementById("notifications").innerHTML=notifications.length?notifications.map(n=>`<div class="row"><div>🔥 New vote received<br><b>${n.artist}</b></div><span class="pill">${n.time}</span></div>`).join(""):'<div class="small">No votes yet.</div>';
+}
+function showAdmin(){document.getElementById("public").classList.add("hidden");document.getElementById("admin").classList.add("hidden");document.getElementById("login").classList.remove("hidden")}
+function showPublic(){document.getElementById("login").classList.add("hidden");document.getElementById("admin").classList.add("hidden");document.getElementById("public").classList.remove("hidden")}
+function login(){
+ if(document.getElementById("user").value==="admin"&&document.getElementById("pass").value==="1234"){
+  document.getElementById("login").classList.add("hidden");document.getElementById("admin").classList.remove("hidden");renderAdmin();
+ }else document.getElementById("loginError").textContent="Demo login: admin / 1234";
+}
+function logout(){showPublic()}
+function resetDemo(){if(confirm("Reset demo votes?")){data=base.map(x=>({...x}));notifications=[];voted=[];save();renderPublic();renderAdmin()}}
+function showToast(t){const x=document.getElementById("toast");x.textContent=t;x.style.display="block";setTimeout(()=>x.style.display="none",2600)}
+renderPublic();
+</script>
+</body>
+</html>
